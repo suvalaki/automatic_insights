@@ -19,6 +19,7 @@ from langchain.sql_database import SQLDatabase
 # write a plain text description of the data.
 
 from ai.chains.sql.name_evaluation.base import TableSelectionDetailThought
+from ai.chains.parallel_chain import ExtractChain, ParallelChain
 
 ADDITIONAL_CONTEXT = (
     "This is the first part of a process where later you will "
@@ -60,17 +61,46 @@ class SingleTablenameRelevanceEvaluationChain(LLMChain):
     output_parser: PydanticOutputParser = SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER
 
 
-class MultipleTablenameRelevanceEvaluationChain(Chain):
 
-    llm : BaseLanguageModel
+def extract_inputs(db, inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
+
+    return [{
+            "table": table, 
+            "table_info": db.get_table_info_no_throw([table]),
+            **inputs 
+        }
+        for table in inputs["tables"]]
+
+
+class TableInfoInputsListExtractor(ExtractChain):
     db: SQLDatabase
-    llm_chain : SingleTablenameRelevanceEvaluationChain 
+    input_variables:List[str] = ["tables"]
+
+    @root_validator(pre=True)
+    def initialize_transform(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        if "transform" not in values:
+            values["transform"] =  lambda x: {"extracted": extract_inputs(values["db"], x)}
+        return values
+
+
+class MultipleTablenameRelevanceEvaluationChain(ParallelChain):
+
+    llm: BaseLanguageModel
+    db: SQLDatabase
+    extract_inputs: TableInfoInputsListExtractor
+    chain: Chain
     output_key: str = "tablename_evaluations"
 
     @root_validator(pre=True)
-    def initialize_llm_chain(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        if "llm_chain" not in values:
-            values["llm_chain"] = SingleTablenameRelevanceEvaluationChain(
+    def initialize_extract_inputs(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        if "extract_inputs" not in values:
+            values["extract_inputs"] =  TableInfoInputsListExtractor(db=values["db"])
+        return values
+
+    @root_validator(pre=True)
+    def initialize_chain(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        if "chain" not in values:
+            values["chain"] = SingleTablenameRelevanceEvaluationChain(
                 llm=values["llm"]
             )
         return values
@@ -83,44 +113,3 @@ class MultipleTablenameRelevanceEvaluationChain(Chain):
     def output_keys(self) -> List[str]:
         return [self.output_key]
 
-    def _call(
-        self,
-        inputs: Dict[str, Any],
-        run_manager: Optional[CallbackManagerForChainRun] = None,
-    ) -> Dict[str, List[TableSelectionDetailThought]]:
-
-        replies = [
-            self.llm_chain.predict(table=table, 
-                table_info=self.db.get_table_info_no_throw([table]),
-                                   **inputs, 
-                                   run_manager=run_manager)
-            for table in inputs["tables"]]
-
-        return {self.output_key: replies}
-
-    async def _acall(
-        self,
-        inputs: Dict[str, Any],
-        run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
-    ) -> Dict[str, str]:
-
-        replies = [
-            self.llm_chain.predict(
-            table=table, 
-            table_info=self.db.get_table_info_no_throw([table]),
-            **inputs, 
-            run_manager=run_manager)
-            async for table in inputs["tables"]]
-
-        return {self.output_key: replies}
-
-
-    def predict(self, callbacks: Callbacks = None, **kwargs: Any) -> List[TableSelectionDetailThought]:
-        return self(kwargs, callbacks=callbacks)[self.output_key]
-
-    async def apredict(self, callbacks: Callbacks = None, **kwargs: Any) -> List[TableSelectionDetailThought]:
-        return (await self.acall(kwargs, callbacks=callbacks))[self.output_key]
-
-    @property
-    def _chain_type(self) -> str:
-        return "multiple_tablename_relevance_evaluation_chain"

@@ -9,13 +9,9 @@ from ai.chains.sql.name_evaluation.bfs_filter import MultipleTablenameRelevanceE
 from langchain.sql_database import SQLDatabase
 from langchain.chat_models import ChatOpenAI
 
-import pandas as pd
-import ast
-import pprint
 
 
 model_name = "gpt-3.5-turbo"
-#model_name = "gpt-4"
 model = ChatOpenAI(model_name=model_name, temperature=0.0)
 
 

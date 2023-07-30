@@ -72,8 +72,43 @@ evaluations = multiple_chain.predict(
 # Do we augment each column with a potential description?
 
 
-def dummy_filter(obj):
-    return [o for o in obj if o.score > 0.7]
+# def dummy_filter(obj):
+#     return [o for o in obj if o.score > 0.7]
 
 
-filtered = dummy_filter(evaluations)
+# filtered = dummy_filter(evaluations)
+
+
+from ai.chains.sql.schema_evaluation.column.column_single import (
+    SingleColumnEvaluateDescriptionChain,
+    EnhanceInputs,
+    ColumnInfoInputsListExtractor,
+    MultipleColumnDescriptionChain,
+)
+
+colum_describer = SingleColumnEvaluateDescriptionChain(llm=model)
+multiple_column_describer = MultipleColumnDescriptionChain(
+    llm=model,
+    db=db,
+    # augment_inputs=EnhanceInputs(db),
+    # extract_inputs=ColumnInfoInputsListExtractor(db),
+)
+
+reply = multiple_column_describer.predict(
+    table_name="retail",
+)
+
+
+from ai.chains.sql.schema_evaluation.table.table_llm import (
+    TableEvaluateDescriptionChain,
+    TableEvaluationChain,
+)
+
+table_describer = TableEvaluateDescriptionChain(llm=model)
+describer = TableEvaluationChain(
+    column_description_chain=colum_describer, table_description_chain=table_describer
+)
+
+reply = describer.predict(
+    table_name="retail",
+)

@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List, Callable, Tuple
+from typing import Dict, Any, Optional, List, Callable, Tuple, Union
 from pydantic import root_validator, BaseModel
 
 from langchain import PromptTemplate, LLMChain
@@ -24,6 +24,15 @@ class ExtractChain(TransformChain):
 class ParallelChain(Chain):
     chain: Chain  # A stateless chain
     extract_inputs: ExtractChain  # Get additional data if required. eg db enrichment Transformer
+    input_prepper: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None
+
+    def prep_inputs(self, inputs: Union[Dict[str, Any], Any]) -> Dict[str, str]:
+        inputs = super().prep_inputs(inputs)
+        if self.input_prepper:
+            inputs = self.input_prepper(inputs)
+        return inputs
+
+    # aprep
 
     def _call(
         self,

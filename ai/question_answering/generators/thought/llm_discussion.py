@@ -47,7 +47,9 @@ EXPLAINER_PARSER = PydanticOutputParser(pydantic_object=ExplainerQuery)
 EXPLAINER_PROMPT = PromptTemplate(
     template=EXPLAINER_PROMPT_TEMPLATE,
     input_variables=["hypothesis", "data"],
-    partial_variables={"format_instructions": EXPLAINER_PARSER.get_format_instructions()},
+    partial_variables={
+        "format_instructions": EXPLAINER_PARSER.get_format_instructions()
+    },
     output_parser=EXPLAINER_PARSER,
 )
 
@@ -61,11 +63,10 @@ class LLMHypothesisDataExplainer(DiscussionGenerator):
         )
 
     def __call__(self, hypothesis: Hypothesis, data: str) -> str:
-        #return data
+        # return data
         # TODO:  reimplement
         result = self.chain.predict(
             hypothesis=hypothesis.hypothesis,
             data=data,
         )
         return result.explanation
-

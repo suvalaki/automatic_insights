@@ -19,7 +19,10 @@ from ai.question_answering.generators.hypothesis_answer.llm_hypothesis_answer im
 )
 from ai.question_answering.thought.llm_comparison import LLThoughtPairComparer
 from ai.question_answering.thought.llm_summarizer import LLMThoughtSummarizer
-from ai.question_answering.data import LLMDataSourceSelector, LLMMultipleDataSourceSelector
+from ai.question_answering.data import (
+    LLMDataSourceSelector,
+    LLMMultipleDataSourceSelector,
+)
 from ai.question_answering.generators.thought.llm_discussion import (
     LLMHypothesisDataExplainer,
 )
@@ -141,7 +144,7 @@ def test_llm_hypothesis_answer():
         data_sources=llm_data_sources,
     )
 
-    #LLMDataSourceSelector(llm_data_sources, model),
+    # LLMDataSourceSelector(llm_data_sources, model),
     data_selector = LLMMultipleDataSourceSelector(llm_data_sources, model)
 
     generator = TargettedThoughtGenerator(

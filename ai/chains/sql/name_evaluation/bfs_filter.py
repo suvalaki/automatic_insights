@@ -1,4 +1,3 @@
-
 from typing import List, Dict, Optional, Any, Tuple
 
 from pydantic import validator, root_validator
@@ -15,7 +14,7 @@ from langchain.callbacks.manager import (
 from langchain.sql_database import SQLDatabase
 
 # BFS filter does all the tables in paralel
-# its probably better to periodically look at the data and just 
+# its probably better to periodically look at the data and just
 # write a plain text description of the data.
 
 from ai.chains.sql.name_evaluation.base import TableSelectionDetailThought
@@ -45,46 +44,47 @@ SINGLE_EVALUATION_PROMPT_TEMPLATE = (
     "\n\n{format_instructions}"
 )
 
-SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER = PydanticOutputParser(pydantic_object=TableSelectionDetailThought)
+SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER = PydanticOutputParser(
+    pydantic_object=TableSelectionDetailThought
+)
 
 SINGLE_EVALUATION_PROMPT = PromptTemplate(
     template=SINGLE_EVALUATION_PROMPT_TEMPLATE,
     input_variables=["objective", "table", "table_info", "tables"],
     partial_variables={
-        "additional_context" : ADDITIONAL_CONTEXT,
-        "format_instructions": SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER.get_format_instructions()},
+        "additional_context": ADDITIONAL_CONTEXT,
+        "format_instructions": SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER.get_format_instructions(),
+    },
     output_parser=SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER,
 )
+
 
 class SingleTablenameRelevanceEvaluationChain(LLMChain):
     prompt: PromptTemplate = SINGLE_EVALUATION_PROMPT
     output_parser: PydanticOutputParser = SINGLE_EVALUATION_PROMPT_OUTPUT_PARSER
 
 
-
 def extract_inputs(db, inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
-
-    return [{
-            "table": table, 
-            "table_info": db.get_table_info_no_throw([table]),
-            **inputs 
-        }
-        for table in inputs["tables"]]
+    return [
+        {"table": table, "table_info": db.get_table_info_no_throw([table]), **inputs}
+        for table in inputs["tables"]
+    ]
 
 
 class TableInfoInputsListExtractor(ExtractChain):
     db: SQLDatabase
-    input_variables:List[str] = ["tables"]
+    input_variables: List[str] = ["tables"]
 
     @root_validator(pre=True)
     def initialize_transform(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if "transform" not in values:
-            values["transform"] =  lambda x: {"extracted": extract_inputs(values["db"], x)}
+            values["transform"] = lambda x: {
+                "extracted": extract_inputs(values["db"], x)
+            }
         return values
 
 
 class MultipleTablenameRelevanceEvaluationChain(ParallelChain):
-
     llm: BaseLanguageModel
     db: SQLDatabase
     extract_inputs: TableInfoInputsListExtractor
@@ -94,15 +94,13 @@ class MultipleTablenameRelevanceEvaluationChain(ParallelChain):
     @root_validator(pre=True)
     def initialize_extract_inputs(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if "extract_inputs" not in values:
-            values["extract_inputs"] =  TableInfoInputsListExtractor(db=values["db"])
+            values["extract_inputs"] = TableInfoInputsListExtractor(db=values["db"])
         return values
 
     @root_validator(pre=True)
     def initialize_chain(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if "chain" not in values:
-            values["chain"] = SingleTablenameRelevanceEvaluationChain(
-                llm=values["llm"]
-            )
+            values["chain"] = SingleTablenameRelevanceEvaluationChain(llm=values["llm"])
         return values
 
     @property
@@ -112,4 +110,3 @@ class MultipleTablenameRelevanceEvaluationChain(ParallelChain):
     @property
     def output_keys(self) -> List[str]:
         return [self.output_key]
-

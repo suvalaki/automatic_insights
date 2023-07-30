@@ -3,12 +3,15 @@ from typing import List, Any
 from pydantic import BaseModel
 
 from ai.chains.sql.name_evaluation.database_filter import TableSelectionChain
-from ai.chains.sql.name_evaluation.bfs_filter import SingleTablenameRelevanceEvaluationChain
-from ai.chains.sql.name_evaluation.bfs_filter import MultipleTablenameRelevanceEvaluationChain
+from ai.chains.sql.name_evaluation.bfs_filter import (
+    SingleTablenameRelevanceEvaluationChain,
+)
+from ai.chains.sql.name_evaluation.bfs_filter import (
+    MultipleTablenameRelevanceEvaluationChain,
+)
 
 from langchain.sql_database import SQLDatabase
 from langchain.chat_models import ChatOpenAI
-
 
 
 model_name = "gpt-3.5-turbo"
@@ -26,45 +29,46 @@ print(reply.json(indent=2))
 
 from typing import Dict, Any
 from langchain import LLMChain
-from langchain.callbacks.base import BaseCallbackHandler 
+from langchain.callbacks.base import BaseCallbackHandler
 
 
 prompt = "Critique the output: "
 
 
 class CritiqueLLMCallback(BaseCallbackHandler, LLMChain):
-
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
         """Run when chain ends running."""
         pass
 
 
-
 single_chain = SingleTablenameRelevanceEvaluationChain(llm=model)
 single_chain.predict(
     objective="What are the number of customers in the UK.",
-    table="retail", 
+    table="retail",
     table_info=db.get_table_info_no_throw(["retail"]),
-    tables=["calendar", "retail", "population"])
+    tables=["calendar", "retail", "population"],
+)
 
 single_chain.predict(
     objective="What are the number of customers in the UK.",
-    table="calendar", 
+    table="calendar",
     table_info="",
-    tables=["calendar", "retail", "population"])
+    tables=["calendar", "retail", "population"],
+)
 
 
 multiple_chain = MultipleTablenameRelevanceEvaluationChain(llm=model, db=db)
 evaluations = multiple_chain.predict(
     objective="What are the number of customers in the UK.",
-     tables=["calendar", "retail", "population"])
+    tables=["calendar", "retail", "population"],
+)
 
 
 # Setup a critique for the outputs?
 
 
 # Now filter to tables with high enough score. Provide those
-# tables to the query planner with their columns. 
+# tables to the query planner with their columns.
 # Do we augment each column with a potential description?
 
 

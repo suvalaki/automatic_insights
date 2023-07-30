@@ -62,7 +62,6 @@ def test_llm_multiple_datasource_selector():
         ),
     ]
 
-
     selector = LLMMultipleDataSourceSelector(
         data_sources=data_sources,
         llm=model,
@@ -76,4 +75,3 @@ def test_llm_multiple_datasource_selector():
     selection = selector(hypothesis, [])
 
     print(str(selection))
-

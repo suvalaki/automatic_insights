@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Any, Tuple
-# The purpose of this filter is to use LLM to evaluate which of the 
-# tables in a database are useful for answering a query. 
+
+# The purpose of this filter is to use LLM to evaluate which of the
+# tables in a database are useful for answering a query.
 
 from langchain.agents import Agent
 from langchain import PromptTemplate, LLMChain
@@ -35,18 +36,21 @@ TABLE_SELECTION_PROMPT_TEMPLATE = (
     "\n\n{format_instructions}"
 )
 
-TABLE_SELECTION_PROMPT_OUTPUT_PARSER = PydanticOutputParser(pydantic_object=TableSelectionsDetailThought)
+TABLE_SELECTION_PROMPT_OUTPUT_PARSER = PydanticOutputParser(
+    pydantic_object=TableSelectionsDetailThought
+)
 
 TABLE_SELECTION_PROMPT = PromptTemplate(
     template=TABLE_SELECTION_PROMPT_TEMPLATE,
     input_variables=["objective", "tables"],
-    partial_variables={"format_instructions": TABLE_SELECTION_PROMPT_OUTPUT_PARSER.get_format_instructions()},
+    partial_variables={
+        "format_instructions": TABLE_SELECTION_PROMPT_OUTPUT_PARSER.get_format_instructions()
+    },
     output_parser=TABLE_SELECTION_PROMPT_OUTPUT_PARSER,
 )
 
 
 class TableSelectionChain(LLMChain):
-
     # This chain only does a single LLM call to get all the information
 
     db: SQLDatabase
@@ -62,30 +66,24 @@ class TableSelectionChain(LLMChain):
     def output_keys(self) -> List[str]:
         return [self.output_key]
 
-
     def prep_prompts(
         self,
         input_list: List[Dict[str, Any]],
         run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Tuple[List[PromptValue], Optional[List[str]]]:
-
         tables = self.db.get_table_names()
         format_table = ",".join(tables)
         input_list[0].update({"tables": format_table})
         reply = super().prep_prompts(input_list, run_manager=run_manager)
         return reply
 
-
     async def aprep_prompts(
         self,
         input_list: List[Dict[str, Any]],
         run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
     ) -> Tuple[List[PromptValue], Optional[List[str]]]:
-        
-
         tables = self.db.get_table_names()
         format_table = ",".join(tables)
         input_list[0].update({"tables": format_table})
         reply = await super().prep_prompts(input_list, run_manager=run_manager)
         return reply
-

@@ -79,7 +79,7 @@ class TargettedThoughtGenerator(BaseGenerator[Hypothesis, TargettedThought]):
             reason = "\n".join([r.reason for r in relevant_data_source.selection])
 
         discussion = self.discussion_generator(
-            hypothesis, #reason + "\n\n" + data
+            hypothesis,  # reason + "\n\n" + data
             data,
         )
         score = self.discussion_scorer(hypothesis, data, discussion)
@@ -141,6 +141,7 @@ class HypothesisAnswerGenerator(ABC):
                 set(tuple(chain(*[c for c in summary.contradictions])))
             )
             thoughts = [t for t in thoughts if t not in contradictory_thoughts]
+            thoughts = list(set(thoughts))
 
             if len(thoughts) == 0:
                 continue

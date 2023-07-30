@@ -15,9 +15,11 @@ class DiscussionGenerator:
 
 
 EXPLAINER_PROMPT_TEMPLATE = """
-You are to act as a data insights analyst. 
-You will be given a hypothesis and a piece of data that has been evaluated to relate to the hypothesis. 
-You are to make inferences about the data which are useful for answering the hypothesis.
+
+{format_instructions}
+
+You are to scrutinize data.
+Explain how the data is and how it relates to the hypothesis. 
 
 Hypothesis: 
 {hypothesis}
@@ -25,14 +27,12 @@ Hypothesis:
 Data:
 {data}
 
+Explain how the data is and how it relates to the hypothesis. 
+Dont make any claims about the truth of the hypothesis or not.
+Dont talk about support or not of the hypothesis.
 
-You should be factual in your response. 
-You must refer to the data specifically in your discussion.
-Do not discuss how suitable or admissible your data is. Just make inferences about data relating to the hypothesis.
-Consider if the response actually answers the hypothesis.
-Answer only with the schema required.
 
-{format_instructions}
+Answer only with the output schema specified.
 
 """
 
@@ -41,14 +41,14 @@ class ExplainerQuery(BaseModel):
     explanation: str
 
 
-OUTPUT_PARSER = PydanticOutputParser(pydantic_object=ExplainerQuery)
+EXPLAINER_PARSER = PydanticOutputParser(pydantic_object=ExplainerQuery)
 
 
 EXPLAINER_PROMPT = PromptTemplate(
     template=EXPLAINER_PROMPT_TEMPLATE,
     input_variables=["hypothesis", "data"],
-    partial_variables={"format_instructions": OUTPUT_PARSER.get_format_instructions()},
-    output_parser=OUTPUT_PARSER,
+    partial_variables={"format_instructions": EXPLAINER_PARSER.get_format_instructions()},
+    output_parser=EXPLAINER_PARSER,
 )
 
 
@@ -57,13 +57,15 @@ class LLMHypothesisDataExplainer(DiscussionGenerator):
         self.chain = LLMChain(
             llm=llm,
             prompt=EXPLAINER_PROMPT,
-            output_parser=OUTPUT_PARSER,
+            output_parser=EXPLAINER_PARSER,
         )
 
     def __call__(self, hypothesis: Hypothesis, data: str) -> str:
-        return data
+        #return data
         # TODO:  reimplement
-        return self.chain.predict(
-            hypothesis=hypothesis,
+        result = self.chain.predict(
+            hypothesis=hypothesis.hypothesis,
             data=data,
-        ).explanation
+        )
+        return result.explanation
+

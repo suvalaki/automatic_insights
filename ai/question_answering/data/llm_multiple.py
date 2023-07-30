@@ -27,10 +27,10 @@ class MultipleDatasourceSelectorQuery(BaseModel):
         description="The purpose of the selections made in the plan."
     )
     selection: Tuple[DatasourceSelectorQuery, ...] = Field(
-        [], description="The data sources used to answer the plan. "
-        "Each plan step usually correspond to a new selection."
+        [],
+        description="The data sources used to answer the plan. "
+        "Each plan step usually correspond to a new selection.",
     )
-
 
 
 PROMPT = """
@@ -120,7 +120,9 @@ class LLMMultipleDataSourceSelector(DataSourceSelector):
         print(reply)
         for s in reply.selection:
             if s.data_source in ordered.keys():
-                ordered[s.data_source].reason += "\n" + self._parse_single(s, data_sources).reason
+                ordered[s.data_source].reason += (
+                    "\n" + self._parse_single(s, data_sources).reason
+                )
             else:
                 ordered[s.data_source] = self._parse_single(s, data_sources)
         selections = list(ordered.values())

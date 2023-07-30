@@ -41,8 +41,8 @@ EVAL_COL_DESC_TEMPLATE = (
     "previously provided. "
     "\n\nTablename: {table_name}"
     "\n\nColumn: {column_name}"
-    "\n\nTable Info: {table_info}"
-    "\n\nColumn extract: {column_extract}"
+    "\n\nTable Info (only a small sample of the data): {table_info}"
+    "\n\nColumn extract (only a small sample of the data): {column_extract}"
     "\n\n{format_instructions}"
 )
 

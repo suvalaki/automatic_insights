@@ -106,7 +106,9 @@ from ai.chains.sql.schema_evaluation.table.table_llm import (
 
 table_describer = TableEvaluateDescriptionChain(llm=model)
 describer = TableEvaluationChain(
-    column_description_chain=colum_describer, table_description_chain=table_describer
+    column_description_chain=multiple_column_describer,
+    table_description_chain=table_describer,
+    return_column_descriptions=True,
 )
 
 reply = describer.predict(

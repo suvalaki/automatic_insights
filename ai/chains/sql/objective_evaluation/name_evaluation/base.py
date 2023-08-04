@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field, root_validator, Field
 class TableSelectionDetailThought(BaseModel):
     table: str = Field("The name of the table being evaluated.")
     reasons: List[str] = Field(
-        description="Explain how the likely_contents relates to the objective."
+        description="Explain how the likely_contents relates to the objective. "
+        "You must refer to true information about the data and be logically consistent."
     )
     score: float = Field(
         description="Likelihood that the table will assist in meeting the objective. "

@@ -22,7 +22,9 @@ from langchain.schema import (
     PromptValue,
 )
 
-from ai.chains.sql.name_evaluation.base import TableSelectionsDetailThought
+from ai.chains.sql.objective_evaluation.name_evaluation.base import (
+    TableSelectionsDetailThought,
+)
 
 TABLE_SELECTION_PROMPT_TEMPLATE = (
     "You are provided with an objective and a set of table names. "

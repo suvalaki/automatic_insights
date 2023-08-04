@@ -41,10 +41,30 @@ class ParallelChain(Chain):
     ) -> Dict[str, Any]:
         # Gets a list / generator to roll across
         extract_inputs = self.extract_inputs(inputs, run_manager)
-        replies = [
-            self.chain.predict(**extracted, run_manager=run_manager)
-            for extracted in extract_inputs[self.extract_inputs.output_key]
-        ]
+
+        input_filter = lambda inputs, extracted: {
+            k: v
+            for k, v in inputs.items()
+            if k not in extracted.keys() and k in self.chain.input_keys
+        }
+
+        if getattr(self.chain, "predict", None):
+            replies = [
+                self.chain.predict(
+                    **extracted,
+                    **input_filter(inputs, extracted),
+                    callbacks=run_manager
+                )
+                for extracted in extract_inputs[self.extract_inputs.output_key]
+            ]
+        else:
+            replies = [
+                self.chain(
+                    {**extracted, **input_filter(inputs, extracted)},
+                    callbacks=run_manager,
+                )
+                for extracted in extract_inputs[self.extract_inputs.output_key]
+            ]
 
         return {self.output_key: replies}
 

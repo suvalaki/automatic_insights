@@ -15,9 +15,6 @@ from ai.chains.sql.schema_evaluation.column.column_single import (
     SingleColumnEvaluateDescriptionChain,
     MultipleColumnDescriptionChain,
 )
-from ai.chains.sql.name_evaluation.bfs_filter import (
-    MultipleTablenameRelevanceEvaluationChain,
-)
 
 
 class TableEvaluatedDescription(BaseModel):
@@ -38,6 +35,7 @@ class TableEvaluatedDescription(BaseModel):
             "This covers all the important details about the table."
         )
     )
+
 
 class DetailedTableEvaluatedDescription(TableEvaluatedDescription):
     columns: List[ColumneEvaluatedDescription]
@@ -95,9 +93,8 @@ class TableEvaluationChain(Chain):
         self,
         inputs: Dict[str, Any],
         run_manager: Optional[CallbackManagerForChainRun] = None,
-    ) -> Dict[str, TableEvaluatedDescription| DetailedTableEvaluatedDescription]:
-
-        # enhance inputs onnly once ... 
+    ) -> Dict[str, TableEvaluatedDescription | DetailedTableEvaluatedDescription]:
+        # enhance inputs onnly once ...
         inputs = self.column_description_chain.input_prepper(inputs)
 
         column_descriptions = self.column_description_chain.predict(
@@ -109,19 +106,19 @@ class TableEvaluationChain(Chain):
             callbacks=run_manager.inheritable_handlers
         )
         if self.return_column_descriptions:
-            return {self.output_key: DetailedTableEvaluatedDescription(
-                **table_description.dict(), 
-                columns=column_descriptions
-            )}
+            return {
+                self.output_key: DetailedTableEvaluatedDescription(
+                    **table_description.dict(), columns=column_descriptions
+                )
+            }
         return {self.output_key: table_description}
 
     async def _acall(
         self,
         inputs: Dict[str, Any],
         run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
-    ) -> Dict[str, TableEvaluatedDescription| DetailedTableEvaluatedDescription]:
-
-        # enhance inputs onnly once ... 
+    ) -> Dict[str, TableEvaluatedDescription | DetailedTableEvaluatedDescription]:
+        # enhance inputs onnly once ...
         inputs = self.column_description_chain.input_prepper(inputs)
 
         column_descriptions = await self.column_description_chain.apredict(
@@ -133,10 +130,11 @@ class TableEvaluationChain(Chain):
             callbacks=run_manager.inheritable_handlers
         )
         if self.return_column_descriptions:
-            return {self.output_key: DetailedTableEvaluatedDescription(
-                **table_description.dict(), 
-                columns=column_descriptions
-            )}
+            return {
+                self.output_key: DetailedTableEvaluatedDescription(
+                    **table_description.dict(), columns=column_descriptions
+                )
+            }
         return {self.output_key: table_description}
 
     def predict(

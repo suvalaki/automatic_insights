@@ -17,7 +17,9 @@ from langchain.sql_database import SQLDatabase
 # its probably better to periodically look at the data and just
 # write a plain text description of the data.
 
-from ai.chains.sql.name_evaluation.base import TableSelectionDetailThought
+from ai.chains.sql.objective_evaluation.name_evaluation.base import (
+    TableSelectionDetailThought,
+)
 from ai.chains.parallel_chain import ExtractChain, ParallelChain
 
 ADDITIONAL_CONTEXT = (
@@ -66,7 +68,7 @@ class SingleTablenameRelevanceEvaluationChain(LLMChain):
 
 def extract_inputs(db, inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [
-        {"table": table, "table_info": db.get_table_info_no_throw([table]), **inputs}
+        {"table": table, "table_info": db.get_table_info_no_throw([table])}
         for table in inputs["tables"]
     ]
 
